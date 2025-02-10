@@ -130,6 +130,7 @@ class EntriesExtractor:
         Returns:
             List of lists, where each inner list contains semantically related sentences
         """
+        # print(entries)
         relevancy_results = self._apply_relevancy_models(entries)
         gc.collect()
         sentences_indices_groups = self._group_indices_by_value(relevancy_results)
@@ -144,19 +145,21 @@ class EntriesExtractor:
     
     def _redo_punctuation(self, raw_document: str) -> List[str]:
         """Clean the extracted entries from a PDF document."""
-        final_entries: List[str] = []
+        # final_entries: List[str] = []
         document_sentences: List[str] = sent_tokenize(raw_document)
+        # print(document_sentences) 
 
         punc_entries: List[List[str]] = self.punct_extractor.infer(
             document_sentences, apply_sbd=True
         )
         punc_entries = self._flatten_list(punc_entries)
+        # print(punc_entries)
 
-        for entry in punc_entries:
-            if len(entry) > 5 and entry.count(" ") > 6 and "©" not in entry:
-                final_entries.append(entry)
+        # for entry in punc_entries:
+        #     if len(entry) > 5 and entry.count(" ") > 6 and "©" not in entry:
+        #         final_entries.append(entry)
 
-        return final_entries
+        return punc_entries
 
     def __call__(
         self, documents: List[str]
@@ -179,8 +182,9 @@ class EntriesExtractor:
         final_entries = []
         for document in documents:
             
-            entries = self._redo_punctuation(document)
-            entries = self._get_list_of_relevant_entries(entries)
+            entries: List[str] = self._redo_punctuation(document)
+            entries: List[List[str]] = self._get_list_of_relevant_entries(entries)
+            entries = [" ".join(entry) for entry in entries]
             final_entries.append(entries)
         return final_entries
         
