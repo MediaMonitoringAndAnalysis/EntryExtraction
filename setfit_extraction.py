@@ -4,7 +4,7 @@ from setfit import SetFitModel
 from itertools import groupby
 import gc
 from tqdm import tqdm
-
+from punctuators.models import PunctCapSegModelONNX
 
 
 class EntriesExtractor:
@@ -13,8 +13,10 @@ class EntriesExtractor:
         relevancy_model_name: str = "Sfekih/sentence_relevancy_model",
         independance_model_name: str = "Sfekih/sentence_independancy_model",
         max_sentences: int = 5,
-        overlap: int = 2
+        overlap: int = 2,
+        punct_model_name: str = "1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase",
     ):
+        self.punct_extractor = PunctCapSegModelONNX.from_pretrained(punct_model_name)
         self.relevancy_model_name = relevancy_model_name
         self.independance_model_name = independance_model_name
         self.relevancy_model = SetFitModel.from_pretrained(relevancy_model_name)
@@ -22,6 +24,10 @@ class EntriesExtractor:
         self.max_sentences = max_sentences
         self.overlap = overlap
         
+    def _flatten_list(self, l: List[List[str]]) -> List[str]:
+        """Flatten a list of lists into a single list."""
+        return [item for sublist in l for item in sublist]
+    
     def _chunk_long_sentences(self, lst: List[str], step) -> List[str]:
         i = 0
 
@@ -108,7 +114,7 @@ class EntriesExtractor:
 
         return final_regrouped_entries
 
-    def _get_list_of_sentences(self, entries: List[str]) -> List[List[str]]:
+    def _get_list_of_relevant_entries(self, entries: List[str]) -> List[List[str]]:
         """
         Process a single document to extract meaningful entries from its sentences.
         
@@ -135,6 +141,22 @@ class EntriesExtractor:
         gc.collect()
 
         return final_grouped_entries
+    
+    def _redo_punctuation(self, raw_document: str) -> List[str]:
+        """Clean the extracted entries from a PDF document."""
+        final_entries: List[str] = []
+        document_sentences: List[str] = sent_tokenize(raw_document)
+
+        punc_entries: List[List[str]] = self.punct_extractor.infer(
+            document_sentences, apply_sbd=True
+        )
+        punc_entries = self._flatten_list(punc_entries)
+
+        for entry in punc_entries:
+            if len(entry) > 5 and entry.count(" ") > 6 and "©" not in entry:
+                final_entries.append(entry)
+
+        return final_entries
 
     def __call__(
         self, documents: List[str]
@@ -156,8 +178,9 @@ class EntriesExtractor:
         """
         final_entries = []
         for document in documents:
-            document_sentences = sent_tokenize(document)
-            entries = self._get_list_of_sentences(document_sentences)
+            
+            entries = self._redo_punctuation(document)
+            entries = self._get_list_of_relevant_entries(entries)
             final_entries.append(entries)
         return final_entries
         
