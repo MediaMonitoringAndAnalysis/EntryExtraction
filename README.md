@@ -14,7 +14,7 @@ This module provides functionality to extract and group semantically related sen
 To use this module, you can install it via pip:
 
 ```bash
-pip install setfit nltk tqdm
+pip install git+https://github.com/MediaMonitoringAndAnalysis/EntryExtraction
 ```
 
 ## Models
@@ -26,7 +26,7 @@ The module uses two SetFit models:
 ## Usage
 
 ```python
-from setfit_extraction import EntriesExtractor
+from entry_extraction import EntriesExtractor
 
 # Initialize the extractor
 extractor = EntriesExtractor(
