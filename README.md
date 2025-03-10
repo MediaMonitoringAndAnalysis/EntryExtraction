@@ -26,7 +26,7 @@ The module uses two SetFit models:
 ## Usage
 
 ```python
-from entry_extraction import EntriesExtractor
+from entry_extraction import SemanticEntriesExtractor
 
 # Initialize the extractor
 extractor = EntriesExtractor(
@@ -48,7 +48,7 @@ entries = extractor(documents)
 
 ## Configuration Parameters
 
-The `EntriesExtractor` class accepts the following parameters:
+The `SemanticEntriesExtractor` class accepts the following parameters:
 
 - `relevancy_model_name` (str): Path or name of the SetFit model for determining sentence relevancy
 - `independance_model_name` (str): Path or name of the SetFit model for determining sentence independence
