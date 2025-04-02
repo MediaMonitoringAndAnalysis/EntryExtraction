@@ -163,7 +163,7 @@ class SemanticEntriesExtractor:
 
     def __call__(
         self, documents: List[str], show_progress: bool = True
-    ) -> List[List[List[str]]]:
+    ) -> List[List[str]]:
         """
         Main entry point for processing multiple documents.
         
@@ -184,8 +184,8 @@ class SemanticEntriesExtractor:
             
             entries: List[str] = self._redo_punctuation(document)
             entries: List[List[str]] = self._get_list_of_relevant_entries(entries)
-            entries = [" ".join(entry) for entry in entries]
-            entries = [entry for entry in entries if len(str(entry)) > 5]
+            entries: List[str] = [" ".join(entry) for entry in entries]
+            entries: List[str] = [entry for entry in entries if len(str(entry)) > 5]
             final_entries.append(entries)
             
         return final_entries
