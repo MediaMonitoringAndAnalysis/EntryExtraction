@@ -162,7 +162,7 @@ class SemanticEntriesExtractor:
         return punc_entries
 
     def __call__(
-        self, documents: List[str]
+        self, documents: List[str], show_progress: bool = True
     ) -> List[List[List[str]]]:
         """
         Main entry point for processing multiple documents.
@@ -180,7 +180,7 @@ class SemanticEntriesExtractor:
             Each document's entries are organized as lists of related sentence groups.
         """
         final_entries = []
-        for document in documents:
+        for document in tqdm(documents, desc="Extracting entries from documents", disable=not show_progress):
             
             entries: List[str] = self._redo_punctuation(document)
             entries: List[List[str]] = self._get_list_of_relevant_entries(entries)
