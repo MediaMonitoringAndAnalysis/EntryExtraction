@@ -15,6 +15,7 @@ class SemanticEntriesExtractor:
         max_sentences: int = 5,
         overlap: int = 2,
         punct_model_name: str = "1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase",
+        delete_question_entries: bool = False,
     ):
         self.punct_extractor = PunctCapSegModelONNX.from_pretrained(punct_model_name)
         self.relevancy_model_name = relevancy_model_name
@@ -23,7 +24,7 @@ class SemanticEntriesExtractor:
         self.independance_model = SetFitModel.from_pretrained(independance_model_name)
         self.max_sentences = max_sentences
         self.overlap = overlap
-        
+        self.delete_question_entries = delete_question_entries
     def _flatten_list(self, l: List[List[str]]) -> List[str]:
         """Flatten a list of lists into a single list."""
         return [item for sublist in l for item in sublist]
@@ -153,6 +154,8 @@ class SemanticEntriesExtractor:
             document_sentences, apply_sbd=True
         )
         punc_entries = self._flatten_list(punc_entries)
+        if self.delete_question_entries:
+            punc_entries = [entry for entry in punc_entries if "?" not in entry]
         # print(punc_entries)
 
         # for entry in punc_entries:
