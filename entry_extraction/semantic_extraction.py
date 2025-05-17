@@ -199,7 +199,7 @@ class SemanticEntriesExtractor:
             
             if match > best_match_distance:
                 best_match_distance = match
-                best_match = int(page_num.split("_")[-1].split(" "))
+                best_match = int(page_num.split("_")[-1].split(" ")[-1])
 
         return best_match
 
