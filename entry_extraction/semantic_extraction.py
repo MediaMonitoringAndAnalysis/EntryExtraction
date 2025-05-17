@@ -193,16 +193,13 @@ class SemanticEntriesExtractor:
             entry_start_lower = word_tokenize(entry.lower())
             page_text_lower = word_tokenize(page_text.lower())
             
-            # Calculate similarity ratio using Levenshtein distance
-            # Lower distance means higher similarity, so we need to invert the ratio
-            # We want 1.0 for perfect match and 0.0 for completely different strings
             # Use sequence matching to find where the entry appears in the page text
             matcher = SequenceMatcher(None, entry_start_lower, page_text_lower)
             match = matcher.find_longest_match(0, len(entry_start_lower), 0, len(page_text_lower)).size
             
             if match > best_match_distance:
                 best_match_distance = match
-                best_match = int(page_num.split("_")[-1])
+                best_match = int(page_num.split("_")[-1].split(" "))
 
         return best_match
 
