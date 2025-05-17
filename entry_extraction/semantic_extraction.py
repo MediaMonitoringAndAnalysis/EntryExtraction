@@ -1,11 +1,11 @@
 from typing import List, Tuple, Union, Dict
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 from setfit import SetFitModel
 from itertools import groupby
 import gc
 from tqdm import tqdm
 from punctuators.models import PunctCapSegModelONNX
-from difflib import SequenceMatcher
+from Levenshtein import distance as levenshtein_distance
 
 
 class SemanticEntriesExtractor:
@@ -168,9 +168,28 @@ class SemanticEntriesExtractor:
         #         final_entries.append(entry)
 
         return punc_entries
+    
+    @staticmethod
+    def _lcs_length(a, b):
+        m, n = len(a), len(b)
+        # Create a table to store lengths of LCS
+        L = [[0] * (n + 1) for _ in range(m + 1)]
+        
+        # Build L[m+1][n+1] in bottom-up fashion
+        for i in range(m + 1):
+            for j in range(n + 1):
+                if i == 0 or j == 0:
+                    L[i][j] = 0
+                elif a[i-1] == b[j-1]:
+                    L[i][j] = L[i-1][j-1] + 1
+                else:
+                    L[i][j] = max(L[i-1][j], L[i][j-1])
+        
+        # L[m][n] contains the length of LCS
+        return L[m][n]
 
     def _find_starting_page(
-        self, entry: str, pages: Dict[str, str], threshold: float = 0.8
+        self, entry: str, pages: Dict[str, str], threshold: float = 0.6
     ) -> int:
         """
         Find the starting page of an entry using fuzzy matching.
@@ -184,14 +203,19 @@ class SemanticEntriesExtractor:
             The page number where the entry starts, or -1 if no match is found
         """
         # Get the first few words of the entry for matching
-        entry_start = " ".join(entry.split()[:10])
 
         best_match = -1
         best_ratio = 0
 
         for page_num, page_text in pages.items():
             # Look for the entry start in the page text
-            ratio = SequenceMatcher(None, entry_start, page_text).ratio()
+            entry_start_lower = word_tokenize(entry.lower())
+            page_text_lower = word_tokenize(page_text.lower())
+            # Find longest common subsequence
+            
+            # Calculate ratio based on longest common subsequence
+            lcs = self._lcs_length(entry_start_lower, page_text_lower)
+            ratio = lcs / max(len(entry_start_lower), len(page_text_lower)) if max(len(entry_start_lower), len(page_text_lower)) > 0 else 0
             if ratio > best_ratio and ratio >= threshold:
                 best_ratio = ratio
                 best_match = int(page_num)
