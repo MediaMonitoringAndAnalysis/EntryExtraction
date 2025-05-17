@@ -6,7 +6,7 @@ import gc
 from tqdm import tqdm
 from punctuators.models import PunctCapSegModelONNX
 from Levenshtein import distance as levenshtein_distance
-
+from difflib import SequenceMatcher
 
 class SemanticEntriesExtractor:
     def __init__(
@@ -168,28 +168,9 @@ class SemanticEntriesExtractor:
         #         final_entries.append(entry)
 
         return punc_entries
-    
-    @staticmethod
-    def _lcs_length(a, b):
-        m, n = len(a), len(b)
-        # Create a table to store lengths of LCS
-        L = [[0] * (n + 1) for _ in range(m + 1)]
-        
-        # Build L[m+1][n+1] in bottom-up fashion
-        for i in range(m + 1):
-            for j in range(n + 1):
-                if i == 0 or j == 0:
-                    L[i][j] = 0
-                elif a[i-1] == b[j-1]:
-                    L[i][j] = L[i-1][j-1] + 1
-                else:
-                    L[i][j] = max(L[i-1][j], L[i][j-1])
-        
-        # L[m][n] contains the length of LCS
-        return L[m][n]
 
     def _find_starting_page(
-        self, entry: str, pages: Dict[str, str], threshold: float = 0.6
+        self, entry: str, pages: Dict[str, str]
     ) -> int:
         """
         Find the starting page of an entry using fuzzy matching.
@@ -205,20 +186,23 @@ class SemanticEntriesExtractor:
         # Get the first few words of the entry for matching
 
         best_match = -1
-        best_ratio = 0
+        best_match_distance = 0
 
         for page_num, page_text in pages.items():
             # Look for the entry start in the page text
             entry_start_lower = word_tokenize(entry.lower())
             page_text_lower = word_tokenize(page_text.lower())
-            # Find longest common subsequence
             
-            # Calculate ratio based on longest common subsequence
-            lcs = self._lcs_length(entry_start_lower, page_text_lower)
-            ratio = lcs / max(len(entry_start_lower), len(page_text_lower)) if max(len(entry_start_lower), len(page_text_lower)) > 0 else 0
-            if ratio > best_ratio and ratio >= threshold:
-                best_ratio = ratio
-                best_match = int(page_num)
+            # Calculate similarity ratio using Levenshtein distance
+            # Lower distance means higher similarity, so we need to invert the ratio
+            # We want 1.0 for perfect match and 0.0 for completely different strings
+            # Use sequence matching to find where the entry appears in the page text
+            matcher = SequenceMatcher(None, entry_start_lower, page_text_lower)
+            match = matcher.find_longest_match(0, len(entry_start_lower), 0, len(page_text_lower)).size
+            
+            if match > best_match_distance:
+                best_match_distance = match
+                best_match = int(page_num.split("_")[-1])
 
         return best_match
 
