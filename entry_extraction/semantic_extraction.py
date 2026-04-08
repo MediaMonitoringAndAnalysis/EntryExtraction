@@ -212,22 +212,22 @@ class SemanticEntriesExtractor:
         entries: List[str] = [entry for entry in entries if len(str(entry)) > 5]
         return entries
 
-    def _make_entries_pages(
-        self, entries: List[str], pages: Dict[str, str]
-    ) -> List[Dict[str, Union[str, int]]]:
-        doc_entries: List[Dict[str, Union[str, int]]] = []
-        current_page = 0  # Initialize page number at 0
-        for entry in entries:
-            page_num = self._find_starting_page(entry, pages)
-            if page_num == -1:  # If page not found, use the previous entry's page
-                page_num = current_page
-            else:
-                current_page = page_num  # Update current page for next entry
-            doc_entries.append({"text": entry, "page": page_num})
-        return doc_entries
+    # def _make_entries_pages(
+    #     self, entries: List[str], pages: Dict[str, str]
+    # ) -> List[Dict[str, Union[str, int]]]:
+    #     doc_entries: List[Dict[str, Union[str, int]]] = []
+    #     current_page = 0  # Initialize page number at 0
+    #     for entry in entries:
+    #         page_num = self._find_starting_page(entry, pages)
+    #         if page_num == -1:  # If page not found, use the previous entry's page
+    #             page_num = current_page
+    #         else:
+    #             current_page = page_num  # Update current page for next entry
+    #         doc_entries.append({"text": entry, "page": page_num})
+    #     return doc_entries
 
     def __call__(
-        self, documents: List[Union[str, Dict[str, str]]], show_progress: bool = True
+        self, documents: List[Union[str, Dict[str, str]]], show_progress: bool = True, extract_page_number: bool = False
     ) -> List[List[Union[Dict[str, Union[str, int]], str]]]:
         """
         Main entry point for processing multiple documents.
@@ -251,16 +251,14 @@ class SemanticEntriesExtractor:
             desc="Extracting entries from documents",
             disable=not show_progress,
         ):
-            if isinstance(document, dict):
+            if isinstance(document, dict) :
                 # Handle dictionary input (page-based)
                 doc_entries: List[Dict[str, Union[str, int]]] = []
                 # First process all pages together to handle cross-page sentences
                 all_text = " ".join(document.values())
                 entries: List[str] = self._get_entries_pages(all_text)
                 # Find the starting page for each entry
-                doc_entries: List[Dict[str, Union[str, int]]] = (
-                    self._make_entries_pages(entries, document)
-                )
+                doc_entries: List[str] = entries
             else:
                 # Handle string input (no page information)
                 doc_entries: List[str] = self._get_entries_pages(document)
